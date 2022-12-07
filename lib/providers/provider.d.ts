@@ -21,11 +21,11 @@ export interface NodeStatusResult {
     validators: string[];
     version: Version;
 }
-declare type BlockHash = string;
-declare type BlockHeight = number;
-export declare type BlockId = BlockHash | BlockHeight;
-export declare type Finality = 'optimistic' | 'near-final' | 'final';
-export declare type BlockReference = {
+type BlockHash = string;
+type BlockHeight = number;
+export type BlockId = BlockHash | BlockHeight;
+export type Finality = 'optimistic' | 'near-final' | 'final';
+export type BlockReference = {
     blockId: BlockId;
 } | {
     finality: Finality;
@@ -111,10 +111,10 @@ export interface BlockHeader {
     signature: string;
     latest_protocol_version: number;
 }
-export declare type ChunkHash = string;
-export declare type ShardId = number;
-export declare type BlockShardId = [BlockId, ShardId];
-export declare type ChunkId = ChunkHash | BlockShardId;
+export type ChunkHash = string;
+export type ShardId = number;
+export type BlockShardId = [BlockId, ShardId];
+export type ChunkId = ChunkHash | BlockShardId;
 export interface ChunkHeader {
     balance_burnt: string;
     chunk_hash: ChunkHash;
@@ -222,7 +222,7 @@ export interface MerkleNode {
     hash: string;
     direction: string;
 }
-export declare type MerklePath = MerkleNode[];
+export type MerklePath = MerkleNode[];
 export interface BlockHeaderInnerLiteView {
     height: number;
     epoch_id: string;
@@ -337,7 +337,7 @@ export interface CallFunctionRequest {
     method_name: string;
     args_base64: string;
 }
-export declare type RpcQueryRequest = (ViewAccountRequest | ViewCodeRequest | ViewStateRequest | ViewAccountRequest | ViewAccessKeyRequest | ViewAccessKeyListRequest | CallFunctionRequest) & BlockReference;
+export type RpcQueryRequest = (ViewAccountRequest | ViewCodeRequest | ViewStateRequest | ViewAccountRequest | ViewAccessKeyRequest | ViewAccessKeyListRequest | CallFunctionRequest) & BlockReference;
 /** @hidden */
 export declare abstract class Provider {
     abstract status(): Promise<NodeStatusResult>;

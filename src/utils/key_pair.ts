@@ -1,6 +1,7 @@
 import nacl from 'tweetnacl';
 import { base_encode, base_decode } from './serialize';
 import { Assignable } from './enums';
+import { falcon } from 'crypto_falcon_js';
 
 export type Arrayish = string | ArrayLike<number>;
 
@@ -12,11 +13,13 @@ export interface Signature {
 /** All supported key types */
 export enum KeyType {
     ED25519 = 0,
+    FALCON512 = 1
 }
 
 function key_type_to_str(keyType: KeyType): string {
     switch (keyType) {
     case KeyType.ED25519: return 'ed25519';
+    case KeyType.FALCON512: return 'falcon512';
     default: throw new Error(`Unknown key type ${keyType}`);
     }
 }
@@ -24,6 +27,7 @@ function key_type_to_str(keyType: KeyType): string {
 function str_to_key_type(keyType: string): KeyType {
     switch (keyType.toLowerCase()) {
     case 'ed25519': return KeyType.ED25519;
+    case 'falcon512': return KeyType.FALCON512;
     default: throw new Error(`Unknown key type ${keyType}`);
     }
 }
@@ -49,7 +53,7 @@ export class PublicKey extends Assignable {
         } else if (parts.length === 2) {
             return new PublicKey({ keyType: str_to_key_type(parts[0]), data: base_decode(parts[1]) });
         } else {
-            throw new Error('Invalid encoded key format, must be <curve>:<encoded key>');
+            throw new Error('Invalid encoded key format, must be <algo>:<encoded key>');
         }
     }
 
@@ -60,6 +64,7 @@ export class PublicKey extends Assignable {
     verify(message: Uint8Array, signature: Uint8Array): boolean {
         switch (this.keyType) {
         case KeyType.ED25519: return nacl.sign.detached.verify(message, signature, this.data);
+        case KeyType.FALCON512: return falcon.verifyDetached(signature, message, this.data);
         default: throw new Error(`Unknown key type ${this.keyType}`);
         }
     }
@@ -72,13 +77,14 @@ export abstract class KeyPair {
     abstract getPublicKey(): PublicKey;
 
     /**
-     * @param curve Name of elliptical curve, case-insensitive
+     * @param algo Name of elliptical curve, case-insensitive
      * @returns Random KeyPair based on the curve
      */
-    static fromRandom(curve: string): KeyPair {
-        switch (curve.toUpperCase()) {
+    static fromRandom(algo: string): KeyPair {
+        switch (algo.toUpperCase()) {
         case 'ED25519': return KeyPairEd25519.fromRandom();
-        default: throw new Error(`Unknown curve ${curve}`);
+        case 'FALCON512': return KeyPairFalcon512.fromRandom();
+        default: throw new Error(`Unknown algo ${algo}`);
         }
     }
 
@@ -89,10 +95,11 @@ export abstract class KeyPair {
         } else if (parts.length === 2) {
             switch (parts[0].toUpperCase()) {
             case 'ED25519': return new KeyPairEd25519(parts[1]);
-            default: throw new Error(`Unknown curve: ${parts[0]}`);
+            case 'FALCON512': return new KeyPairFalcon512(parts[1]);
+            default: throw new Error(`Unknown algo: ${parts[0]}`);
             }
         } else {
-            throw new Error('Invalid encoded key format, must be <curve>:<encoded key>');
+            throw new Error('Invalid encoded key format, must be <algo>:<encoded key>');
         }
     }
 }
@@ -143,6 +150,59 @@ export class KeyPairEd25519 extends KeyPair {
 
     toString(): string {
         return `ed25519:${this.secretKey}`;
+    }
+
+    getPublicKey(): PublicKey {
+        return this.publicKey;
+    }
+}
+
+/**
+ * This class provides key pair functionality for Ed25519 curve:
+ * generating key pairs, encoding key pairs, signing and verifying.
+ */
+ export class KeyPairFalcon512 extends KeyPair {
+    readonly publicKey: PublicKey;
+    readonly secretKey: string;
+
+    /**
+     * Construct an instance of key pair given a secret key.
+     * It's generally assumed that these are encoded in base58.
+     * @param {string} secretKey
+     */
+    constructor(secretKey: string) {
+        super();
+        const pubKey = falcon.pubKey(base_decode(secretKey));
+        this.publicKey = new PublicKey({ keyType: KeyType.FALCON512, data: pubKey });
+        this.secretKey = secretKey;
+    }
+
+    /**
+     * Generate a new random keypair.
+     * @example
+     * const keyRandom = KeyPair.fromRandom();
+     * keyRandom.publicKey
+     * // returns [PUBLIC_KEY]
+     *
+     * keyRandom.secretKey
+     * // returns [SECRET_KEY]
+     */
+    static fromRandom() {
+        const newKeyPair = falcon.keyPair();
+        return new KeyPairFalcon512(base_encode(newKeyPair.privateKey));
+    }
+
+    sign(message: Uint8Array): Signature {
+        const signature = falcon.signDetached(message, base_decode(this.secretKey));
+        return { signature, publicKey: this.publicKey };
+    }
+
+    verify(message: Uint8Array, signature: Uint8Array): boolean {
+        return this.publicKey.verify(message, signature);
+    }
+
+    toString(): string {
+        return `falcon512:${this.secretKey}`;
     }
 
     getPublicKey(): PublicKey {
