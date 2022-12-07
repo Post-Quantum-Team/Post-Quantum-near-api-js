@@ -173,7 +173,7 @@ export class KeyPairEd25519 extends KeyPair {
     constructor(secretKey: string) {
         super();
         const pubKey = falcon.pubKey(base_decode(secretKey));
-        this.publicKey = new PublicKey({ keyType: KeyType.FALCON512, data: pubKey });
+        this.publicKey = new PublicKey({ keyType: KeyType.FALCON512, data: pubKey.publicKey });
         this.secretKey = secretKey;
     }
 
