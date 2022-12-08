@@ -41,7 +41,7 @@ dependencies:
   bn.js: 5.2.0
   borsh: 0.7.0
   bs58: 4.0.1
-  crypto_falcon_js: github.com/Post-Quantum-Team/Post-Quantum-Near-Falconjs/4452a106106a72bc1b5917675611ba98ee5b1346
+  crypto_falcon_js: github.com/Post-Quantum-Team/Post-Quantum-Near-Falconjs/b4801ddd762c740604e13494f9d543b419240f3e
   depd: 2.0.0
   error-polyfill: 0.1.3
   http-errors: 1.8.1
@@ -6128,8 +6128,8 @@ packages:
       yargs-parser: 18.1.3
     dev: true
 
-  github.com/Post-Quantum-Team/Post-Quantum-Near-Falconjs/4452a106106a72bc1b5917675611ba98ee5b1346:
-    resolution: {tarball: https://codeload.github.com/Post-Quantum-Team/Post-Quantum-Near-Falconjs/tar.gz/4452a106106a72bc1b5917675611ba98ee5b1346}
+  github.com/Post-Quantum-Team/Post-Quantum-Near-Falconjs/b4801ddd762c740604e13494f9d543b419240f3e:
+    resolution: {tarball: https://codeload.github.com/Post-Quantum-Team/Post-Quantum-Near-Falconjs/tar.gz/b4801ddd762c740604e13494f9d543b419240f3e}
     name: crypto_falcon_js
     version: 1.0.0
     dev: false
