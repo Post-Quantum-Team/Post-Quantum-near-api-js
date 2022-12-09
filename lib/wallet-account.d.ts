@@ -3,7 +3,7 @@ import { Near } from './near';
 import { KeyStore } from './key_stores';
 import { FinalExecutionOutcome } from './providers';
 import { Transaction, Action } from './transaction';
-import { PublicKey } from './utils';
+import { PublicKey, KeyType } from './utils';
 import { Connection } from './connection';
 interface SignInOptions {
     contractId?: string;
@@ -77,6 +77,7 @@ export declare class WalletConnection {
      * @param options.contractId The NEAR account where the contract is deployed
      * @param options.successUrl URL to redirect upon success. Default: current url
      * @param options.failureUrl URL to redirect upon failure. Default: current url
+     * @param keyType The optional KeyType to choose between Ed25519 and Falcon512
      *
      * @example
      * ```js
@@ -85,7 +86,7 @@ export declare class WalletConnection {
      * wallet.requestSignIn({ contractId: 'account-with-deploy-contract.near' });
      * ```
      */
-    requestSignIn(contractIdOrOptions?: string | SignInOptions, title?: string, successUrl?: string, failureUrl?: string): Promise<void>;
+    requestSignIn(contractIdOrOptions?: string | SignInOptions, title?: string, successUrl?: string, failureUrl?: string, keyType?: KeyType): Promise<void>;
     /**
      * Requests the user to quickly sign for a transaction or batch of transactions by redirecting to the NEAR wallet.
      */

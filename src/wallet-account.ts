@@ -12,7 +12,7 @@ import { KeyStore } from './key_stores';
 import { FinalExecutionOutcome } from './providers';
 import { InMemorySigner } from './signer';
 import { Transaction, Action, SCHEMA, createTransaction } from './transaction';
-import { KeyPair, PublicKey } from './utils';
+import { KeyPair, PublicKey, KeyType } from './utils';
 import { baseDecode } from 'borsh';
 import { Connection } from './connection';
 import { serialize } from 'borsh';
@@ -124,6 +124,7 @@ export class WalletConnection {
      * @param options.contractId The NEAR account where the contract is deployed
      * @param options.successUrl URL to redirect upon success. Default: current url
      * @param options.failureUrl URL to redirect upon failure. Default: current url
+     * @param keyType The optional KeyType to choose between Ed25519 and Falcon512
      *
      * @example
      * ```js
@@ -136,7 +137,8 @@ export class WalletConnection {
         contractIdOrOptions: string | SignInOptions = {},
         title?: string,
         successUrl?: string,
-        failureUrl?: string
+        failureUrl?: string,
+        keyType?: KeyType
     ) {
         let options: SignInOptions;
         if (typeof contractIdOrOptions === 'string') {
@@ -157,7 +159,17 @@ export class WalletConnection {
             await contractAccount.state();
 
             newUrl.searchParams.set('contract_id', options.contractId);
-            const accessKey = KeyPair.fromRandom('ed25519');
+            let accessKey: KeyPair;
+            switch (keyType) {
+                case KeyType.ED25519: 
+                    accessKey = KeyPair.fromRandom('ed25519');
+                    break;
+                case KeyType.FALCON512: 
+                    accessKey = KeyPair.fromRandom('falcon512');
+                    break;
+                default: 
+                    accessKey = KeyPair.fromRandom('ed25519');
+            }
             newUrl.searchParams.set('public_key', accessKey.getPublicKey().toString());
             await this._keyStore.setKey(this._networkId, PENDING_ACCESS_KEY_PREFIX + accessKey.getPublicKey(), accessKey);
         }
