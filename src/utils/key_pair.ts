@@ -13,7 +13,7 @@ export interface Signature {
 /** All supported key types */
 export enum KeyType {
     ED25519 = 0,
-    FALCON512 = 1
+    FALCON512 = 2
 }
 
 function key_type_to_str(keyType: KeyType): string {
@@ -35,7 +35,7 @@ function str_to_key_type(keyType: string): KeyType {
 /**
  * PublicKey representation that has type and bytes of the key.
  */
-export class PublicKey extends Assignable {
+export abstract class PublicKey extends Assignable {
     keyType: KeyType;
     data: Uint8Array;
 
@@ -46,27 +46,45 @@ export class PublicKey extends Assignable {
         return value;
     }
 
-    static fromString(encodedKey: string): PublicKey {
+    static fromString(encodedKey: string): PublicKeyEd25519 | PublicKeyFalcon512 {
         const parts = encodedKey.split(':');
         if (parts.length === 1) {
-            return new PublicKey({ keyType: KeyType.ED25519, data: base_decode(parts[0]) });
+            return new PublicKeyEd25519({ keyType: KeyType.ED25519, data: base_decode(parts[0]) });
         } else if (parts.length === 2) {
-            return new PublicKey({ keyType: str_to_key_type(parts[0]), data: base_decode(parts[1]) });
+            if(str_to_key_type(parts[0]) === KeyType.ED25519) {
+                return new PublicKeyEd25519({ keyType: KeyType.ED25519, data: base_decode(parts[1]) });
+            } else if (str_to_key_type(parts[0]) === KeyType.FALCON512) {
+                return new PublicKeyFalcon512({ keyType: KeyType.FALCON512, data: base_decode(parts[1]) });
+            } else {
+                throw new Error('Unknown key type');
+            }
         } else {
             throw new Error('Invalid encoded key format, must be <algo>:<encoded key>');
         }
     }
 
+    abstract toString(): string;
+
+    abstract verify(message: Uint8Array, signature: Uint8Array): boolean;
+}
+
+export class PublicKeyEd25519 extends PublicKey {
     toString(): string {
-        return `${key_type_to_str(this.keyType)}:${base_encode(this.data)}`;
+        return `${key_type_to_str(KeyType.ED25519)}:${base_encode(this.data)}`;
     }
 
     verify(message: Uint8Array, signature: Uint8Array): boolean {
-        switch (this.keyType) {
-        case KeyType.ED25519: return nacl.sign.detached.verify(message, signature, this.data);
-        case KeyType.FALCON512: return falcon.verifyDetached(signature, message, this.data);
-        default: throw new Error(`Unknown key type ${this.keyType}`);
-        }
+        return nacl.sign.detached.verify(message, signature, this.data);
+    }
+}
+
+export class PublicKeyFalcon512 extends PublicKey {
+    toString(): string {
+        return `${key_type_to_str(KeyType.FALCON512)}:${base_encode(this.data)}`;
+    }
+
+    verify(message: Uint8Array, signature: Uint8Array): boolean {
+        return falcon.verifyDetached(signature, message, this.data);
     }
 }
 
@@ -120,7 +138,7 @@ export class KeyPairEd25519 extends KeyPair {
     constructor(secretKey: string) {
         super();
         const keyPair = nacl.sign.keyPair.fromSecretKey(base_decode(secretKey));
-        this.publicKey = new PublicKey({ keyType: KeyType.ED25519, data: keyPair.publicKey });
+        this.publicKey = new PublicKeyEd25519({ keyType: KeyType.ED25519, data: keyPair.publicKey });
         this.secretKey = secretKey;
     }
 
@@ -173,7 +191,7 @@ export class KeyPairEd25519 extends KeyPair {
     constructor(secretKey: string) {
         super();
         const pubKey = falcon.pubKey(base_decode(secretKey));
-        this.publicKey = new PublicKey({ keyType: KeyType.FALCON512, data: pubKey });
+        this.publicKey = new PublicKeyFalcon512({ keyType: KeyType.FALCON512, data: pubKey });
         this.secretKey = secretKey;
     }
 

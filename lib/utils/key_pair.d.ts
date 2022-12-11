@@ -7,16 +7,24 @@ export interface Signature {
 /** All supported key types */
 export declare enum KeyType {
     ED25519 = 0,
-    FALCON512 = 1
+    FALCON512 = 2
 }
 /**
  * PublicKey representation that has type and bytes of the key.
  */
-export declare class PublicKey extends Assignable {
+export declare abstract class PublicKey extends Assignable {
     keyType: KeyType;
     data: Uint8Array;
     static from(value: string | PublicKey): PublicKey;
-    static fromString(encodedKey: string): PublicKey;
+    static fromString(encodedKey: string): PublicKeyEd25519 | PublicKeyFalcon512;
+    abstract toString(): string;
+    abstract verify(message: Uint8Array, signature: Uint8Array): boolean;
+}
+export declare class PublicKeyEd25519 extends PublicKey {
+    toString(): string;
+    verify(message: Uint8Array, signature: Uint8Array): boolean;
+}
+export declare class PublicKeyFalcon512 extends PublicKey {
     toString(): string;
     verify(message: Uint8Array, signature: Uint8Array): boolean;
 }

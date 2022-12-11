@@ -1,8 +1,9 @@
 
 const { Account, Contract, providers } = require('../src/index');
-const testUtils  = require('./test-utils');
+const testUtils  = require('./test-utils-ed25519');
 const fs = require('fs');
 const BN = require('bn.js');
+const key_pair = require('../src/utils/key_pair');
 
 let nearjs;
 let workingAccount;
@@ -13,6 +14,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
 
 beforeAll(async () => {
     nearjs = await testUtils.setUpTestConnection();
+    console.log(nearjs);
     workingAccount = await testUtils.createAccount(nearjs);
 });
 
@@ -20,14 +22,14 @@ afterAll(async () => {
     await workingAccount.deleteAccount(workingAccount.accountId);
 });
 
-test('view pre-defined account works and returns correct name', async () => {
+test('view pre-defined account works and returns correct name (ED25519)', async () => {
     let status = await workingAccount.state();
     expect(status.code_hash).toEqual('11111111111111111111111111111111');
 });
 
-test('create account and then view account returns the created account', async () => {
+test('create account and then view account returns the created account (ED25519)', async () => {
     const newAccountName = testUtils.generateUniqueString('test');
-    const newAccountPublicKey = '9AhWenZ3JddamBoyMqnTbp7yVbRuvqAv3zwfrWgfVRJE';
+    const newAccountPublicKey = 'ed25519:9AhWenZ3JddamBoyMqnTbp7yVbRuvqAv3zwfrWgfVRJE';
     const { amount } = await workingAccount.state();
     const newAmount = new BN(amount).div(new BN(10));
     await workingAccount.createAccount(newAccountName, newAccountPublicKey, newAmount);
@@ -36,7 +38,7 @@ test('create account and then view account returns the created account', async (
     expect(state.amount).toEqual(newAmount.toString());
 });
 
-test('send money', async() => {
+test('send money (ED25519)', async() => {
     const sender = await testUtils.createAccount(nearjs);
     const receiver = await testUtils.createAccount(nearjs);
     const { amount: receiverAmount } = await receiver.state();
@@ -45,7 +47,7 @@ test('send money', async() => {
     expect(state.amount).toEqual(new BN(receiverAmount).add(new BN(10000)).toString());
 });
 
-test('delete account', async() => {
+test('delete account (ED25519)', async() => {
     const sender = await testUtils.createAccount(nearjs);
     const receiver = await testUtils.createAccount(nearjs);
     await sender.deleteAccount(receiver.accountId);
@@ -53,7 +55,7 @@ test('delete account', async() => {
     await expect(reloaded.state()).rejects.toThrow();
 });
 
-test('multiple parallel transactions', async () => {
+test('multiple parallel transactions (ED25519)', async () => {
     const PARALLEL_NUMBER = 5;
     await Promise.all([...Array(PARALLEL_NUMBER).keys()].map(async (_, i) => {
         const account = new Account(workingAccount.connection, workingAccount.accountId);
@@ -63,7 +65,7 @@ test('multiple parallel transactions', async () => {
     }));
 });
 
-test('findAccessKey returns the same access key when fetched simultaneously', async() => {
+test('findAccessKey returns the same access key when fetched simultaneously (ED25519)', async() => {
     const account = await testUtils.createAccount(nearjs);
 
     const [key1, key2] = await Promise.all([
@@ -74,7 +76,7 @@ test('findAccessKey returns the same access key when fetched simultaneously', as
     expect(key1.accessKey).toBe(key2.accessKey);
 });
 
-describe('errors', () => {
+describe('errors (ED25519)', () => {
     let oldLog;
     let logs;
 
@@ -90,20 +92,20 @@ describe('errors', () => {
         console.log = oldLog;
     });
 
-    test('create existing account', async() => {
-        await expect(workingAccount.createAccount(workingAccount.accountId, '9AhWenZ3JddamBoyMqnTbp7yVbRuvqAv3zwfrWgfVRJE', 100))
+    test('create existing account (ED25519)', async() => {
+        await expect(workingAccount.createAccount(workingAccount.accountId, 'ed25519:9AhWenZ3JddamBoyMqnTbp7yVbRuvqAv3zwfrWgfVRJE', 100))
             .rejects.toThrow(/Can't create a new account .+, because it already exists/);
     });
 });
 
-describe('with deploy contract', () => {
+describe('with deploy contract (ED25519)', () => {
     let oldLog;
     let logs;
     let contractId = testUtils.generateUniqueString('test_contract');
     let contract;
 
     beforeAll(async () => {
-        const newPublicKey = await nearjs.connection.signer.createKey(contractId, testUtils.networkId);
+        const newPublicKey = await nearjs.connection.signer.createKey(contractId, testUtils.networkId, key_pair.KeyType.ED25519);
         const data = [...fs.readFileSync(HELLO_WASM_PATH)];
         await workingAccount.createAndDeployContract(contractId, newPublicKey, data, HELLO_WASM_BALANCE);
         contract = new Contract(workingAccount, contractId, {
@@ -124,11 +126,12 @@ describe('with deploy contract', () => {
         console.log = oldLog;
     });
 
-    test('cross-contact assertion and panic', async () => {
+    test('cross-contact assertion and panic (ED25519)', async () => {
         await expect(contract.crossContract({
             args: {},
             gas: 300000000000000
         })).rejects.toThrow(/Smart contract panicked: expected to fail./);
+        oldLog("logs cross-contract : ", logs);
         expect(logs.length).toEqual(7);
         expect(logs[0]).toMatch(new RegExp('^Receipts: \\w+, \\w+, \\w+$'));
         //  Log [test_contract1591458385248117]: test_contract1591458385248117
@@ -141,7 +144,7 @@ describe('with deploy contract', () => {
         expect(logs[6]).toMatch(new RegExp(`^\\s+Log \\[${contractId}\\]: ABORT: expected to fail, filename: \\"assembly/index.ts" line: \\d+ col: \\d+$`));
     });
 
-    test('make function calls via account', async() => {
+    test('make function calls via account (ED25519)', async() => {
         const result = await workingAccount.viewFunction(
             contractId,
             'hello', // this is the function defined in hello.wasm file that we are calling
@@ -158,7 +161,7 @@ describe('with deploy contract', () => {
         expect(await workingAccount.viewFunction(contractId, 'getValue', {})).toEqual(setCallValue);
     });
 
-    test('view contract state', async() => {
+    test('view contract state (ED25519)', async() => {
         const setCallValue = testUtils.generateUniqueString('setCallPrefix');
         await workingAccount.functionCall({
             contractId,
@@ -171,7 +174,7 @@ describe('with deploy contract', () => {
         expect(state).toEqual([['name', setCallValue]]);
     });
 
-    test('make function calls via account with custom parser', async() => {
+    test('make function calls via account with custom parser (ED25519)', async() => {
         const result = await workingAccount.viewFunction(
             contractId,
             'hello', // this is the function defined in hello.wasm file that we are calling
@@ -181,7 +184,7 @@ describe('with deploy contract', () => {
         expect(result).toEqual('hello friend');
     });
 
-    test('make function calls via contract', async() => {
+    test('make function calls via contract (ED25519)', async() => {
         const result = await contract.hello({ name: 'trex' });
         expect(result).toEqual('hello trex');
 
@@ -191,7 +194,7 @@ describe('with deploy contract', () => {
         expect(await contract.getValue()).toEqual(setCallValue);
     });
 
-    test('make function calls via contract with gas', async() => {
+    test('make function calls via contract with gas (ED25519)', async() => {
         const setCallValue = testUtils.generateUniqueString('setCallPrefix');
         const result2 = await contract.setValue({
             args: { value: setCallValue },
@@ -201,39 +204,39 @@ describe('with deploy contract', () => {
         expect(await contract.getValue()).toEqual(setCallValue);
     });
 
-    test('can get logs from method result', async () => {
+    test('can get logs from method result (ED25519)', async () => {
         await contract.generateLogs();
         expect(logs.length).toEqual(3);
         expect(logs[0].substr(0, 8)).toEqual('Receipt:');
         expect(logs.slice(1)).toEqual([`\tLog [${contractId}]: log1`, `\tLog [${contractId}]: log2`]);
     });
 
-    test('can get logs from view call', async () => {
+    test('can get logs from view call (ED25519)', async () => {
         let result = await contract.returnHiWithLogs();
         expect(result).toEqual('Hi');
         expect(logs).toEqual([`Log [${contractId}]: loooog1`, `Log [${contractId}]: loooog2`]);
     });
 
-    test('can get assert message from method result', async () => {
+    test('can get assert message from method result (ED25519)', async () => {
         await expect(contract.triggerAssert()).rejects.toThrow(/Smart contract panicked: expected to fail.+/);
         expect(logs[1]).toEqual(`\tLog [${contractId}]: log before assert`);
         expect(logs[2]).toMatch(new RegExp(`^\\s+Log \\[${contractId}\\]: ABORT: expected to fail, filename: \\"assembly/index.ts" line: \\d+ col: \\d+$`));
     });
 
-    test('test set/remove', async () => {
+    test('test set/remove (ED25519)', async () => {
         await contract.testSetRemove({
             args: { value: '123' }
         });
     });
 
-    test('can have view methods only', async () => {
+    test('can have view methods only (ED25519)', async () => {
         const contract = new Contract(workingAccount, contractId, {
             viewMethods: ['hello'],
         });
         expect(await contract.hello({ name: 'world' })).toEqual('hello world');
     });
 
-    test('can have change methods only', async () => {
+    test('can have change methods only (ED25519)', async () => {
         const contract = new Contract(workingAccount, contractId, {
             changeMethods: ['hello'],
         });

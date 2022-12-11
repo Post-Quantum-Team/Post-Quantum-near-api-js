@@ -4,7 +4,7 @@ const rimraf  = require('util').promisify(require('rimraf'));
 const nearApi = require('../../src/index');
 const UnencryptedFileSystemKeyStore = nearApi.keyStores.UnencryptedFileSystemKeyStore;
 const KeyPair = nearApi.utils.KeyPairEd25519;
-const { ensureDir } = require('../test-utils');
+const { ensureDir } = require('../test-utils-ed25519');
 const fs = require('fs');
 const path = require('path');
 

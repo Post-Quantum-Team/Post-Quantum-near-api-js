@@ -70,9 +70,13 @@ export declare function stake(stake: BN, publicKey: PublicKey): Action;
 export declare function addKey(publicKey: PublicKey, accessKey: AccessKey): Action;
 export declare function deleteKey(publicKey: PublicKey): Action;
 export declare function deleteAccount(beneficiaryId: string): Action;
-export declare class Signature extends Assignable {
+export declare abstract class Signature extends Assignable {
     keyType: KeyType;
     data: Uint8Array;
+}
+export declare class SignatureEd25519 extends Signature {
+}
+export declare class SignatureFalcon512 extends Signature {
 }
 export declare class Transaction extends Assignable {
     signerId: string;

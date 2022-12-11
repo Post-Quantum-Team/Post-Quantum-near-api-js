@@ -3,7 +3,7 @@ import BN from 'bn.js';
 
 import { Enum, Assignable } from './utils/enums';
 import { serialize, deserialize } from 'borsh';
-import { KeyType, PublicKey } from './utils/key_pair';
+import { KeyType, PublicKey, PublicKeyEd25519, PublicKeyFalcon512 } from './utils/key_pair';
 import { Signer } from './signer';
 
 export class FunctionCallPermission extends Assignable {
@@ -95,10 +95,14 @@ export function deleteAccount(beneficiaryId: string): Action {
     return new Action({deleteAccount: new DeleteAccount({ beneficiaryId }) });
 }
 
-export class Signature extends Assignable {
+export abstract class Signature extends Assignable {
     keyType: KeyType;
     data: Uint8Array;
 }
+
+export class SignatureEd25519 extends Signature {}
+
+export class SignatureFalcon512 extends Signature {}
 
 export class Transaction extends Assignable {
     signerId: string;
@@ -146,25 +150,33 @@ export class Action extends Enum {
 }
 
 export const SCHEMA = new Map<Function, any>([
-    [Signature, {kind: 'struct', fields: [
+    [SignatureEd25519, {kind: 'struct', fields: [
         ['keyType', 'u8'],
         ['data', [64]]
     ]}],
+    [SignatureFalcon512, {kind: 'struct', fields: [
+        ['keyType', 'u8'],
+        ['data', [666]]
+    ]}],
     [SignedTransaction, {kind: 'struct', fields: [
         ['transaction', Transaction],
-        ['signature', Signature]
+        ['signature', SignatureEd25519 || SignatureFalcon512]
     ]}],
     [Transaction, { kind: 'struct', fields: [
         ['signerId', 'string'],
-        ['publicKey', PublicKey],
+        ['publicKey', PublicKeyEd25519 || PublicKeyFalcon512],
         ['nonce', 'u64'],
         ['receiverId', 'string'],
         ['blockHash', [32]],
         ['actions', [Action]]
     ]}],
-    [PublicKey, { kind: 'struct', fields: [
+    [PublicKeyEd25519, { kind: 'struct', fields: [
         ['keyType', 'u8'],
         ['data', [32]]
+    ]}],
+    [PublicKeyFalcon512, { kind: 'struct', fields: [
+        ['keyType', 'u8'],
+        ['data', [897]]
     ]}],
     [AccessKey, { kind: 'struct', fields: [
         ['nonce', 'u64'],
@@ -205,14 +217,14 @@ export const SCHEMA = new Map<Function, any>([
     ]}],
     [Stake, { kind: 'struct', fields: [
         ['stake', 'u128'],
-        ['publicKey', PublicKey]
+        ['publicKey', PublicKeyEd25519 || PublicKeyFalcon512]
     ]}],
     [AddKey, { kind: 'struct', fields: [
-        ['publicKey', PublicKey],
+        ['publicKey', PublicKeyEd25519 || PublicKeyFalcon512],
         ['accessKey', AccessKey]
     ]}],
     [DeleteKey, { kind: 'struct', fields: [
-        ['publicKey', PublicKey]
+        ['publicKey', PublicKeyEd25519 || PublicKeyFalcon512]
     ]}],
     [DeleteAccount, { kind: 'struct', fields: [
         ['beneficiaryId', 'string']
@@ -234,10 +246,23 @@ async function signTransactionObject(transaction: Transaction, signer: Signer, a
     const message = serialize(SCHEMA, transaction);
     const hash = new Uint8Array(sha256.sha256.array(message));
     const signature = await signer.signMessage(message, accountId, networkId);
-    const signedTx = new SignedTransaction({
-        transaction,
-        signature: new Signature({ keyType: transaction.publicKey.keyType, data: signature.signature })
-    });
+    let signedTx: SignedTransaction;
+    switch (transaction.publicKey.keyType) {
+        case KeyType.ED25519:
+            signedTx = new SignedTransaction({
+                transaction,
+                signature: new SignatureEd25519({ keyType: transaction.publicKey.keyType, data: signature.signature })
+            });
+            break;
+        case KeyType.FALCON512:
+            signedTx = new SignedTransaction({
+                transaction,
+                signature: new SignatureFalcon512({ keyType: transaction.publicKey.keyType, data: signature.signature })
+            });
+            break;
+        default:
+            throw Error("Unknown Key Type");
+    }
     return [hash, signedTx];
 }
 

@@ -1,5 +1,5 @@
 const nearApi = require('../src/index');
-const testUtils = require('./test-utils');
+const testUtils = require('./test-utils-ed25519');
 
 let nearjs;
 let workingAccount;

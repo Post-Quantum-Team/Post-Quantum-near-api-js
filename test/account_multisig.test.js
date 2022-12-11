@@ -2,7 +2,7 @@
 const nearApi = require('../src/index');
 const fs = require('fs');
 const BN = require('bn.js');
-const testUtils  = require('./test-utils');
+const testUtils  = require('./test-utils-ed25519');
 const semver = require('semver');
 
 let nearjs;

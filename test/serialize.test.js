@@ -45,7 +45,7 @@ function createTransferTx() {
     const blockHash = nearApi.utils.serialize.base_decode('244ZQ9cgj3CQ6bWBdytfrJMuMQ1jdXLFGnr4HhvtCTnM');
     return nearApi.transactions.createTransaction(
         'test.near',
-        nearApi.utils.PublicKey.fromString('Anu7LYDfpLtkP7E16LT9imXF694BdQaa9ufVkQiwTQxC'),
+        nearApi.utils.PublicKey.fromString('ed25519:Anu7LYDfpLtkP7E16LT9imXF694BdQaa9ufVkQiwTQxC'),
         'whatever.near',
         1,
         actions,
@@ -81,16 +81,17 @@ async function verifySignedTransferTx(signedTx) {
 test('serialize and sign transfer tx', async() => {
     const transaction = createTransferTx();
     const keyStore = await createKeyStore();
-
+    console.warn("before signing");
     let [, signedTx] = await nearApi.transactions.signTransaction(transaction.receiverId, transaction.nonce, transaction.actions, transaction.blockHash, new nearApi.InMemorySigner(keyStore), 'test.near', 'test');
-
+    console.warn("signedTx : ", signedTx);
+    console.warn("After signing : ", signedTx);
+    console.warn("before verifying : ", signedTx);
     verifySignedTransferTx(signedTx);
 });
 
 test('serialize and sign transfer tx object', async() => {
     const transaction = createTransferTx();
     const keyStore = await createKeyStore();
-
     let [, signedTx] = await nearApi.transactions.signTransaction(transaction, new nearApi.InMemorySigner(keyStore), 'test.near', 'test');
 
     verifySignedTransferTx(signedTx);
