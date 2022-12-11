@@ -1,8 +1,8 @@
-const { Account, Contract, providers } = require('../src/index');
+const { Account, Contract, providers } = require('../../src/index');
 const testUtils  = require('./test-utils-falcon512');
 const fs = require('fs');
 const BN = require('bn.js');
-const key_pair = require('../src/utils/key_pair');
+const key_pair = require('../../src/utils/key_pair');
 
 let nearjs;
 let workingAccount;
@@ -13,9 +13,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
 
 beforeAll(async () => {
     nearjs = await testUtils.setUpTestConnection();
-    console.warn(nearjs);
     workingAccount = await testUtils.createAccount(nearjs);
-    console.log(workingAccount);
 });
 
 afterAll(async () => {

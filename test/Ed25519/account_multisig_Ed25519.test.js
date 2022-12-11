@@ -1,5 +1,5 @@
 /* global BigInt */
-const nearApi = require('../src/index');
+const nearApi = require('../../src/index');
 const fs = require('fs');
 const BN = require('bn.js');
 const testUtils  = require('./test-utils-ed25519');
@@ -59,9 +59,9 @@ beforeAll(async () => {
     console.log(startFromVersion);
 });
 
-describe('deployMultisig key rotations', () => {
+describe('deployMultisig key rotations (ED25519)', () => {
 
-    test('full access key if recovery method is "ledger" or "phrase", limited access key if "phone"', async () => {
+    test('full access key if recovery method is "ledger" or "phrase", limited access key if "phone" (ED25519)', async () => {
         const account = await testUtils.createAccount(nearjs);
         await account.addKey(KeyPair.fromRandom('ed25519').getPublicKey());
         await account.addKey(KeyPair.fromRandom('ed25519').getPublicKey());
@@ -79,9 +79,9 @@ describe('deployMultisig key rotations', () => {
     
 });
 
-describe('account2fa transactions', () => {
+describe('account2fa transactions (ED25519)', () => {
 
-    test('add app key before deployMultisig', async() => {
+    test('add app key before deployMultisig (ED25519)', async() => {
         let account = await testUtils.createAccount(nearjs);
         const appPublicKey = KeyPair.fromRandom('ed25519').getPublicKey();
         const appAccountId = 'foobar';
@@ -95,7 +95,7 @@ describe('account2fa transactions', () => {
             .access_key.permission.FunctionCall.receiver_id).toEqual(appAccountId);
     });
 
-    test('add app key', async() => {
+    test('add app key (ED25519)', async() => {
         let account = await testUtils.createAccount(nearjs);
         account = await getAccount2FA(account);
         const appPublicKey = KeyPair.fromRandom('ed25519').getPublicKey();
@@ -109,7 +109,7 @@ describe('account2fa transactions', () => {
             .access_key.permission.FunctionCall.receiver_id).toEqual(appAccountId);
     });
 
-    test('send money', async() => {
+    test('send money (ED25519)', async() => {
         let sender = await testUtils.createAccount(nearjs);
         let receiver = await testUtils.createAccount(nearjs);
         sender = await getAccount2FA(sender);

@@ -27,7 +27,7 @@
     "devDependencies": {
         "@types/bn.js": "^5.1.1",
         "@types/http-errors": "^1.8.2",
-        "@types/node": "^18.11.11",
+        "@types/node": "^18.11.13",
         "@typescript-eslint/eslint-plugin": "^2.34.0",
         "@typescript-eslint/parser": "^2.34.0",
         "browserify": "^16.5.2",

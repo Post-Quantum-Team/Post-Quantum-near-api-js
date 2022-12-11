@@ -1,6 +1,6 @@
 
 const fs = require('fs');
-const nearApi = require('../src/index');
+const nearApi = require('../../src/index');
 
 class Test extends nearApi.utils.enums.Assignable {
 }
@@ -81,11 +81,7 @@ async function verifySignedTransferTx(signedTx) {
 test('serialize and sign transfer tx', async() => {
     const transaction = createTransferTx();
     const keyStore = await createKeyStore();
-    console.warn("before signing");
     let [, signedTx] = await nearApi.transactions.signTransaction(transaction.receiverId, transaction.nonce, transaction.actions, transaction.blockHash, new nearApi.InMemorySigner(keyStore), 'test.near', 'test');
-    console.warn("signedTx : ", signedTx);
-    console.warn("After signing : ", signedTx);
-    console.warn("before verifying : ", signedTx);
     verifySignedTransferTx(signedTx);
 });
 

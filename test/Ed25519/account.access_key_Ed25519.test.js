@@ -1,4 +1,4 @@
-const nearApi = require('../src/index');
+const nearApi = require('../../src/index');
 const testUtils = require('./test-utils-ed25519');
 
 let nearjs;
@@ -18,7 +18,7 @@ beforeEach(async () => {
     contract = await testUtils.deployContract(workingAccount, contractId);
 });
 
-test('make function call using access key', async() => {
+test('make function call using access key (ED25519)', async() => {
     const keyPair = nearApi.utils.KeyPair.fromRandom('ed25519');
     await workingAccount.addKey(keyPair.getPublicKey(), contractId, '', '2000000000000000000000000');
 
@@ -29,7 +29,7 @@ test('make function call using access key', async() => {
     expect(await contract.getValue()).toEqual(setCallValue);
 });
 
-test('remove access key no longer works', async() => {
+test('remove access key no longer works (ED25519)', async() => {
     const keyPair = nearApi.utils.KeyPair.fromRandom('ed25519');
     let publicKey = keyPair.getPublicKey();
     await workingAccount.addKey(publicKey, contractId, '', 400000);
@@ -49,7 +49,7 @@ test('remove access key no longer works', async() => {
     }
 });
 
-test('view account details after adding access keys', async() => {
+test('view account details after adding access keys (ED25519)', async() => {
     const keyPair = nearApi.utils.KeyPair.fromRandom('ed25519');
     await workingAccount.addKey(keyPair.getPublicKey(), contractId, '', 1000000000);
 
@@ -74,7 +74,7 @@ test('view account details after adding access keys', async() => {
     expect(details.authorizedApps).toEqual(jasmine.arrayContaining(expectedResult.authorizedApps));
 });
 
-test('loading account after adding a full key', async() => {
+test('loading account after adding a full key (ED25519)', async() => {
     const keyPair = nearApi.utils.KeyPair.fromRandom('ed25519');
     // wallet calls this with an empty string for contract id and method
     await workingAccount.addKey(keyPair.getPublicKey(), '', '');
