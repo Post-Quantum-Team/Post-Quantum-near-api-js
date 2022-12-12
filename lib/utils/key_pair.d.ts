@@ -1,4 +1,5 @@
-export type Arrayish = string | ArrayLike<number>;
+import { Assignable } from './enums';
+export declare type Arrayish = string | ArrayLike<number>;
 export interface Signature {
     signature: Uint8Array;
     publicKey: PublicKey;
@@ -11,10 +12,9 @@ export declare enum KeyType {
 /**
  * PublicKey representation that has type and bytes of the key.
  */
-export declare abstract class PublicKey {
+export declare abstract class PublicKey extends Assignable {
     keyType: KeyType;
     data: Uint8Array;
-    constructor(args: any);
     static from(value: string | PublicKey): PublicKey;
     static fromString(encodedKey: string): PublicKeyEd25519 | PublicKeyFalcon512;
     abstract toString(): string;

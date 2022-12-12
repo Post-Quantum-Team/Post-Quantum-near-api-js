@@ -9,9 +9,9 @@ export declare const MULTISIG_GAS: BN;
 export declare const MULTISIG_DEPOSIT: BN;
 export declare const MULTISIG_CHANGE_METHODS: string[];
 export declare const MULTISIG_CONFIRM_METHODS: string[];
-type sendCodeFunction = () => Promise<any>;
-type getCodeFunction = (method: any) => Promise<string>;
-type verifyCodeFunction = (securityCode: any) => Promise<any>;
+declare type sendCodeFunction = () => Promise<any>;
+declare type getCodeFunction = (method: any) => Promise<string>;
+declare type verifyCodeFunction = (securityCode: any) => Promise<any>;
 export declare enum MultisigDeleteRequestRejectionError {
     CANNOT_DESERIALIZE_STATE = "Cannot deserialize the contract state",
     MULTISIG_NOT_INITIALIZED = "Smart contract panicked: Multisig contract should be initialized before usage",
