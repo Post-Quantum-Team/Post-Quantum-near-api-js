@@ -1,6 +1,5 @@
 import nacl from 'tweetnacl';
 import { base_encode, base_decode } from './serialize';
-import { Assignable } from './enums';
 import { falcon } from 'crypto_falcon_js';
 
 export type Arrayish = string | ArrayLike<number>;
@@ -35,9 +34,14 @@ function str_to_key_type(keyType: string): KeyType {
 /**
  * PublicKey representation that has type and bytes of the key.
  */
-export abstract class PublicKey extends Assignable {
+export abstract class PublicKey {
     keyType: KeyType;
     data: Uint8Array;
+
+    constructor(args: any) {
+        this.keyType = args["keyType"];
+        this.data = args["data"];
+    }
 
     static from(value: string | PublicKey): PublicKey {
         if (typeof value === 'string') {
